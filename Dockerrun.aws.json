@@ -1,0 +1,64 @@
+{
+  "AWSEBDockerrunVersion": 2,
+  "volumes": [
+    {
+      "name": "node-app",
+      "host": {
+        "sourcePath": "/var/app/current/node-app"
+      }
+    },
+    {
+      "name": "tomcat-app",
+      "host": {
+        "sourcePath": "/var/app/current/tomcat-app"
+      }
+    }
+  ],
+  "containerDefinitions": [
+    {
+      "name": "node-app",
+      "image": "node:0.12",
+      "essential": true,
+      "memory": 128,
+      "portMappings": [
+        {
+          "hostPort": 80,
+          "containerPort": 8000
+        }
+      ],
+      "command": [
+        "/bin/bash",
+        "/usr/src/app/run.sh"
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "node-app",
+          "containerPath": "/usr/src/app"
+        }
+      ]
+    },
+    {
+      "name": "tomcat-app",
+      "image": "tomcat:8.0",
+      "essential": true,
+      "memory": 256,
+      "portMappings": [
+        {
+          "hostPort": 8080,
+          "containerPort": 8080
+        }
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "awseb-logs-tomcat-app",
+          "containerPath": "/usr/local/tomcat/logs"
+        },
+        {
+          "sourceVolume": "tomcat-app",
+          "containerPath": "/usr/local/tomcat/webapps/ROOT",
+          "readOnly": true
+        }
+      ]
+    }
+  ]
+}
