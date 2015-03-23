@@ -1,0 +1,100 @@
+{
+  "AWSEBDockerrunVersion": 2,
+  "volumes": [
+    {
+      "name": "node-app",
+      "host": {
+        "sourcePath": "/var/app/current/node-app"
+      }
+    },
+    {
+      "name": "tomcat-app",
+      "host": {
+        "sourcePath": "/var/app/current/tomcat-app"
+      }
+    },
+    {
+      "name": "nginx-proxy-static",
+      "host": {
+        "sourcePath": "/var/app/current/proxy/html"
+      }
+    },
+    {
+      "name": "nginx-proxy-conf",
+      "host": {
+        "sourcePath": "/var/app/current/proxy/conf.d"
+      }
+    }
+  ],
+  "containerDefinitions": [
+    {
+      "name": "node-app",
+      "image": "node:0.12",
+      "essential": true,
+      "memory": 128,
+      "command": [
+        "/bin/bash",
+        "/usr/src/app/run.sh"
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "node-app",
+          "containerPath": "/usr/src/app"
+        }
+      ]
+    },
+    {
+      "name": "tomcat-app",
+      "image": "tomcat:8.0",
+      "essential": true,
+      "memory": 256,
+      "mountPoints": [
+        {
+          "sourceVolume": "awseb-logs-tomcat-app",
+          "containerPath": "/usr/local/tomcat/logs"
+        },
+        {
+          "sourceVolume": "tomcat-app",
+          "containerPath": "/usr/local/tomcat/webapps/ROOT",
+          "readOnly": true
+        }
+      ]
+    },
+    {
+      "name": "nginx-proxy",
+      "image": "nginx",
+      "essential": true,
+      "memory": 128,
+      "portMappings": [
+        {
+          "hostPort": 80,
+          "containerPort": 80
+        },
+        {
+          "hostPort": 8080,
+          "containerPort": 8080
+        }       
+      ],
+      "links": [
+        "node-app",
+        "tomcat-app"
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "awseb-logs-nginx-proxy",
+          "containerPath": "/var/log/nginx"
+        },
+        {
+          "sourceVolume": "nginx-proxy-static",
+          "containerPath": "/usr/share/nginx/html",
+          "readOnly": true
+        },
+        {
+          "sourceVolume": "nginx-proxy-conf",
+          "containerPath": "/etc/nginx/conf.d",
+          "readOnly": true
+        }
+      ]
+    }
+  ]
+}
